@@ -26,16 +26,15 @@ sap.ui.define([
 				// Setup the tile layer for the map
 				this.setupTileLayer();
 				// Get Station Data from backend
+				// Show Busy Indicator
 				sap.ui.core.BusyIndicator.show();
 				let stationData = await this.getStationData();
-				console.log(stationData);
 				// Add the station markers to the map
 				await this.addStationMarkers(stationData);
+				// Hide Busy Indicator
 				sap.ui.core.BusyIndicator.hide();
 				// Add the train path to the map
 				this.addTrainPath();
-				// // Setup the moving marker
-				// this.setupMovingMarker();
 				// add button to map
 				this.setupButton();
 			},
@@ -182,17 +181,21 @@ sap.ui.define([
 			},
 
 			getStationData: function () {
+				// Get the Station Data from the backend
 				return new Promise((resolve, reject) => {
 					this.getOwnerComponent().getModel().read("/StationSet", {
 						success: (oData, oResponse) => {
 							oData.results.forEach((station) => {
+								// Remove the metadata from the station data, if any
 								if(station.__metadata){
 									delete station.__metadata;
 								}
 							})
+							// Resolve the promise with the station data
 							resolve(oData.results)
 						},
 						error: (oResponse) => {
+							// If there is an error, use the reject for the promise, and handle the response.
 							reject(oResponse)
 						}
 					})
