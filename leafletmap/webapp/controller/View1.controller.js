@@ -20,11 +20,18 @@ sap.ui.define([
 				// Set the model to the view
 				this.getView().setModel(oModel, "status");
 			},
-			onAfterRendering: function () {
+			onAfterRendering: async function () {
 				// Add the map to the view
 				this.addMap();
 				// Setup the tile layer for the map
 				this.setupTileLayer();
+				// Get Station Data from backend
+				sap.ui.core.BusyIndicator.show();
+				let stationData = await this.getStationData();
+				console.log(stationData);
+				// Add the station markers to the map
+				await this.addStationMarkers(stationData);
+				sap.ui.core.BusyIndicator.hide();
 				// Add the train path to the map
 				this.addTrainPath();
 				// // Setup the moving marker
@@ -119,7 +126,7 @@ sap.ui.define([
 				let pathCoordinates = structuredClone(this.coordinates);
 				// reverse the path if needed
 				if (status.reversed) {
-					pathCoordinates.reverse();
+					pathCoordinates.reverse();	
 				}
 				// Move the marker along the train path
 				pathCoordinates.forEach((coords, index) => {
@@ -172,6 +179,38 @@ sap.ui.define([
 				// Place the button in the topRightLegend control
 				// now the button will show up on the top right corner of the map
 				oButton.placeAt(topRightLegend.getContainer());
+			},
+
+			getStationData: function () {
+				return new Promise((resolve, reject) => {
+					this.getOwnerComponent().getModel().read("/StationSet", {
+						success: (oData, oResponse) => {
+							oData.results.forEach((station) => {
+								if(station.__metadata){
+									delete station.__metadata;
+								}
+							})
+							resolve(oData.results)
+						},
+						error: (oResponse) => {
+							reject(oResponse)
+						}
+					})
+				})
+			},
+			addStationMarkers: async function (stationData) {
+				// Set up layer for stations
+				this.stationLayer = L.layerGroup().addTo(this.map);
+				// Create a custom icon for the station
+				let stationIcon = L.icon({
+					iconUrl: `${$.sap.getModulePath("com.jec.leafletmap")}/images/marker-icon.png`,
+					iconSize: [24, 24],
+					iconAnchor: [12, 12]
+				});
+				// Add the station markers to the map
+				stationData.forEach((station) => {
+					L.marker([station.Rlat, station.Rlng], { icon: stationIcon }).addTo(this.stationLayer);
+				});
 			}
 		});
 	});
