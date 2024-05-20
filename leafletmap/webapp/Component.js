@@ -32,6 +32,16 @@ sap.ui.define([
 
                 // set the train path model
                 this.setModel(models.createTrainPathModel(), "trainPath")
+
+                // // check service
+                // this.getModel().read("/StationSet", {
+                //     success: function (oData) {
+                //         console.log(oData);
+                //     },
+                //     error: function (oError) {
+                //         console.log(oError);
+                //     }
+                // })
             }
         });
     }
